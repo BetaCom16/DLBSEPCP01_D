@@ -43,4 +43,9 @@ terraform.rc
 
 # Lokale Terraform-Konfigurationsdateien
 .terraform/
+<<<<<<< HEAD
 >>>>>>> 0e33c77 (Switch to AWS + Terraform Initial)
+=======
+
+infra/.terraform/
+>>>>>>> e5b371e (gitignore Test)
