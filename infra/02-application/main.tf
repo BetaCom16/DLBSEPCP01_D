@@ -22,12 +22,9 @@ data "aws_iam_role" "lambda_exec_role" {
 resource "aws_lambda_function" "app_lambda" {
   function_name = "cpmodule2025-website"
   package_type  = "Image"
-
-  role = data.aws_iam_role.lambda_exec_role.arn
-
-  image_uri = "${data.aws_ecr_repository.app_repo.repository_url}:latest"
-  
-  timeout = 30
+  role          = data.aws_iam_role.lambda_exec_role.arn
+  image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:latest"
+  timeout       = 30
 
   environment {
     variables = {
@@ -56,13 +53,13 @@ resource "aws_security_group" "alb_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Von überall
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1" # Alle Protokolle
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
