@@ -30,8 +30,9 @@ resource "aws_lambda_function" "app_lambda" {
   role          = data.aws_iam_role.lambda_exec_role.arn
   image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:${var.image_tag}"
   timeout       = 30
+  memory_size   = 1024
 
-  memory_size   = 1024 
+  architectures = ["x86_64"]
 }
 
 data "aws_vpc" "default" {
