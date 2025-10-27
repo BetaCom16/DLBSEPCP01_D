@@ -1,3 +1,5 @@
+master_process off;
+
 pid /tmp/nginx.pid;
 
 events {
