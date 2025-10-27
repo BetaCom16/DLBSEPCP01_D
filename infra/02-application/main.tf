@@ -28,7 +28,7 @@ resource "aws_lambda_function" "app_lambda" {
   image_uri = "${data.aws_ecr_repository.app_repo.repository_url}:latest"
   
   timeout = 30
-  
+
   environment {
     variables = {
       REFRESH_ON_APPLY = timestamp()
@@ -85,10 +85,9 @@ resource "aws_lb_target_group" "lambda_tg" {
 resource "aws_lambda_permission" "alb_permission" {
   statement_id  = "AllowExecutionFromALB"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app_lambda.function_name
+  function_name = aws_lambda_function.app_lambda.arn
   principal     = "elasticloadbalancing.amazonaws.com"
-  
-  source_arn = aws_lb_target_group.lambda_tg.arn
+  source_arn    = aws_lb_target_group.lambda_tg.arn
 }
 
 resource "aws_lb_target_group_attachment" "lambda_attachment" {
