@@ -28,10 +28,10 @@ resource "aws_lambda_function" "app_lambda" {
   function_name = "cpmodule2025-website"
   package_type  = "Image"
   role          = data.aws_iam_role.lambda_exec_role.arn
-  
   image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:${var.image_tag}"
-  
   timeout       = 30
+
+  memory_size   = 1024 
 }
 
 data "aws_vpc" "default" {
