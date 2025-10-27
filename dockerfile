@@ -1,11 +1,9 @@
-FROM nginx:alpine
+FROM python:3.11-slim
 
-RUN rm /usr/share/nginx/html/index.html
+WORKDIR /app
 
-COPY index.html /usr/share/nginx/html/index.html
+COPY index.html .
 
-COPY default.conf.template /etc/nginx/nginx.conf
+EXPOSE 8080
 
-ENTRYPOINT ["/usr/sbin/nginx"]
-
-CMD ["-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]
+CMD ["python", "-m", "http.server", "8080"]
