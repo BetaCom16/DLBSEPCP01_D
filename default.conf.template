@@ -1,14 +1,23 @@
-server {
-    listen       ${PORT:-8080};
-    server_name  localhost;
+events {
+    worker_connections  1024; # Standardwert
+}
 
-    location / {
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
-    }
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
 
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
+    server {
+        listen       ${PORT:-8080};
+        server_name  localhost;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
     }
 }
