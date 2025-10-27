@@ -6,4 +6,6 @@ COPY index.html /usr/share/nginx/html/index.html
 
 COPY default.conf.template /etc/nginx/nginx.conf
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/usr/sbin/nginx"]
+
+CMD ["-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]
