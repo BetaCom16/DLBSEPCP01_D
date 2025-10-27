@@ -7,6 +7,11 @@ terraform {
   }
 }
 
+variable "image_tag" {
+  type        = string
+  description = "Der bereitgestellte Docker Image Tag"
+}
+
 provider "aws" {
   region = "eu-central-1"
 }
@@ -23,14 +28,10 @@ resource "aws_lambda_function" "app_lambda" {
   function_name = "cpmodule2025-website"
   package_type  = "Image"
   role          = data.aws_iam_role.lambda_exec_role.arn
-  image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:latest"
+  
+  image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:${var.image_tag}"
+  
   timeout       = 30
-
-  environment {
-    variables = {
-      REFRESH_ON_APPLY = timestamp()
-    }
-  }
 }
 
 data "aws_vpc" "default" {
