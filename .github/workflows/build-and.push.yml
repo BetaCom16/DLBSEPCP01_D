@@ -1,4 +1,4 @@
-name: CI/CD - Build and Push Docker Image to ECR
+name: CI/CD - Build, Push, and Update Lambda
 
 on:
   push:
@@ -9,14 +9,14 @@ on:
 env:
   ECR_REPOSITORY: cpmodule2025
   AWS_REGION: eu-central-1
+  LAMBDA_FUNCTION_NAME: cpmodule2025-website 
 
 jobs:
-  build-and-push:
-    name: Build and Push to ECR
+  build-push-deploy:
+    name: Build, Push and Deploy
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write 
       contents: read
 
     steps:
@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -34,19 +34,19 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get Git commit short SHA
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Build, tag and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # Baue das Image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          # Pushe das Image
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update Lambda Function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --image-uri ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest

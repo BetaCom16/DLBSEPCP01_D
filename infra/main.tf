@@ -60,10 +60,10 @@ resource "aws_lambda_function" "app_lambda" {
   memory_size   = 128
   architectures = ["x86_64"]
 
-  environment {
-    variables = {
-      REFRESH_ON_APPLY = timestamp()
-    }
+  lifecycle {
+    ignore_changes = [
+      image_uri,
+    ]
   }
 }
 
