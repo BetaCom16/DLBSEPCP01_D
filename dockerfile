@@ -1,9 +1,7 @@
-FROM python:3.11-slim
+FROM public.ecr.aws/lambda/python:3.11
 
-WORKDIR /app
+WORKDIR /var/task
 
-COPY index.html .
+COPY index.html app.py ./
 
-EXPOSE 8080
-
-CMD ["python", "-m", "http.server", "8080"]
+CMD ["app.handler"]
