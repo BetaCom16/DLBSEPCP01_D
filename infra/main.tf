@@ -70,6 +70,50 @@ resource "aws_lambda_function" "app_lambda" {
 resource "aws_lambda_function_url" "app_lambda_url" {
   function_name    = aws_lambda_function.app_lambda.function_name
   authorization_type = "NONE"
+  invoke_mode      = "RESPONSE_STREAM" 
+}
+
+resource "aws_wafv2_web_acl" "lambda_waf" {
+  name  = "${var.project_name}-waf"
+  
+  scope = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWS-Managed-Common-Rules"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesCommonRuleSet"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-waf-common"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.project_name}-waf"
+    sampled_requests_enabled   = true
+  }
+}
+
+resource "aws_wafv2_web_acl_association" "lambda_waf_assoc" {
+  web_acl_arn = aws_wafv2_web_acl.lambda_waf.arn
+  resource_arn = aws_lambda_function.app_lambda.arn
 }
 
 #resource "aws_cloudfront_distribution" "app_cdn" {
@@ -119,10 +163,10 @@ resource "aws_lambda_function_url" "app_lambda_url" {
 #  }
 #}
 
-#output "website_url" {
-#  description = "Die URL der Webseite"
-#  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
-#}
+output "website_url" {
+  description = "Die URL der Webseite"
+  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
+}
 
 output "lambda_function_url" {
   description = "Die temp. direkte URL zur Lambda-Funktion"
