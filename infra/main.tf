@@ -119,9 +119,14 @@ resource "aws_lambda_function_url" "app_lambda_url" {
 #  }
 #}
 
-output "website_url" {
-  description = "Die URL der Webseite"
-  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
+#output "website_url" {
+#  description = "Die URL der Webseite"
+#  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
+#}
+
+output "lambda_function_url" {
+  description = "Die temp. direkte URL zur Lambda-Funktion"
+  value       = aws_lambda_function_url.app_lambda_url.function_url
 }
 
 output "ecr_repository_url" {
