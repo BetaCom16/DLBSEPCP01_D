@@ -163,10 +163,10 @@ resource "aws_wafv2_web_acl_association" "lambda_waf_assoc" {
 #  }
 #}
 
-output "website_url" {
-  description = "Die URL der Webseite"
-  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
-}
+#output "website_url" {
+#  description = "Die URL der Webseite"
+#  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
+#}
 
 output "lambda_function_url" {
   description = "Die temp. direkte URL zur Lambda-Funktion"
