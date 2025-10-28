@@ -7,11 +7,6 @@ terraform {
   }
 }
 
-variable "image_tag" {
-  type        = string
-  description = "Der bereitgestellte Docker Image Tag"
-}
-
 provider "aws" {
   region = "eu-central-1"
 }
@@ -28,86 +23,66 @@ resource "aws_lambda_function" "app_lambda" {
   function_name = "cpmodule2025-website"
   package_type  = "Image"
   role          = data.aws_iam_role.lambda_exec_role.arn
-  image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:${var.image_tag}"
+  
+  image_uri     = "${data.aws_ecr_repository.app_repo.repository_url}:latest"
+  
   timeout       = 30
   memory_size   = 1024
-
   architectures = ["x86_64"]
-}
 
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+  environment {
+    variables = {
+      REFRESH_ON_APPLY = timestamp()
+    }
   }
 }
 
-resource "aws_security_group" "alb_sg" {
-  name        = "alb-security-group"
-  description = "Erlaubt HTTP-Traffic zum ALB"
-  vpc_id      = data.aws_vpc.default.id
+resource "aws_lambda_function_url" "app_lambda_url" {
+  function_name    = aws_lambda_function.app_lambda.function_name
+  authorization_type = "NONE"
+}
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+resource "aws_cloudfront_distribution" "app_cdn" {
+  origin {
+    domain_name = replace(aws_lambda_function_url.app_lambda_url.function_url, "https://", "")
+    origin_id   = "lambda-origin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "lambda-origin"
+    
+    viewer_protocol_policy = "redirect-to-https"
+
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
   }
-}
 
-resource "aws_lb" "app_alb" {
-  name               = "meine-app-alb"
-  internal           = false
-  load_balancer_type = "application"
-  
-  security_groups = [aws_security_group.alb_sg.id]
-  
-  subnets = data.aws_subnets.default.ids
-}
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
 
-resource "aws_lb_target_group" "lambda_tg" {
-  name        = "lambda-target-group"
-  target_type = "lambda"
-}
-
-resource "aws_lambda_permission" "alb_permission" {
-  statement_id  = "AllowExecutionFromALB"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app_lambda.arn
-  principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.lambda_tg.arn
-}
-
-resource "aws_lb_target_group_attachment" "lambda_attachment" {
-  target_group_arn = aws_lb_target_group.lambda_tg.arn
-  target_id        = aws_lambda_function.app_lambda.arn
-  
-  depends_on = [aws_lambda_permission.alb_permission]
-}
-
-resource "aws_lb_listener" "http_listener" {
-  load_balancer_arn = aws_lb.app_alb.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.lambda_tg.arn
+  viewer_certificate {
+    cloudfront_default_certificate = true
   }
 }
 
 output "website_url" {
-  description = "Die URL der Webseite"
-  value       = "http://${aws_lb.app_alb.dns_name}"
+  description = "Die URL unserer Webseite (via CloudFront)"
+  value       = "https://${aws_cloudfront_distribution.app_cdn.domain_name}"
 }
